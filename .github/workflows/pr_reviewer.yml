@@ -13,22 +13,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout PR HEAD
+    - name: Checkout del PR (HEAD)
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0                # Trae todo el historial
-        ref: ${{ github.event.pull_request.head.sha }}   # Checkout del commit del PR
+        fetch-depth: 0
+        ref: ${{ github.event.pull_request.head.sha }}
 
-    - name: Configurar la rama base del PR
+    - name: Traer rama base del PR
       run: |
         echo "🔧 Base: ${{ github.event.pull_request.base.ref }}"
-        echo "🔧 Head: ${{ github.event.pull_request.head.ref }}"
         git fetch origin ${{ github.event.pull_request.base.ref }}
 
     - name: Obtener commits del PR
       run: |
-        git log origin/${{ github.event.pull_request.base.ref }}..HEAD \
-          --pretty=format:"%h %s" -n 20 > commits.txt
+        git log origin/${{ github.event.pull_request.base.ref }}..HEAD --pretty=format:"%h %s" > commits.txt
         echo "📄 Commits capturados:"
         cat commits.txt
 
