@@ -3,6 +3,7 @@ import sys
 from openai import OpenAI, OpenAIError
 
 def main():
+    # Obtener la clave de API desde variable de entorno
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         print("❌ Falta la variable de entorno OPENAI_API_KEY.")
@@ -11,9 +12,11 @@ def main():
     client = OpenAI(api_key=api_key)
 
     try:
+        # Leer commits desde archivo
         with open("commits.txt", "r", encoding="utf-8") as f:
             commits = f.read().strip()
 
+        # Si no hay commits, salir temprano
         if not commits:
             mensaje = "ℹ️ No hay commits nuevos para revisar."
             print(mensaje)
@@ -23,11 +26,13 @@ def main():
 
         print("🔍 Enviando commits a OpenAI (gpt-3.5-turbo)...\n")
 
+        # Limitar longitud del texto
         max_chars = 12000
         if len(commits) > max_chars:
             commits = commits[:max_chars]
             print("⚠️ Los commits fueron truncados por exceder el tamaño máximo.")
 
+        # Llamada al modelo ChatCompletion
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -46,6 +51,7 @@ def main():
         )
 
         revision = response.choices[0].message.content.strip()
+
         print("🧠 Sugerencias de revisión:\n")
         print(revision)
 
@@ -53,11 +59,23 @@ def main():
             out.write(revision)
 
     except OpenAIError as e:
-        mensaje = f"⚠️ No se pudo completar la revisión: {str(e)}"
+        mensaje = f"⚠️ No se pudo completar la revisión: {e}"
         print(mensaje)
         with open("revision.txt", "w", encoding="utf-8") as out:
             out.write(mensaje)
         sys.exit(1)
+
+    except Exception as e:
+        mensaje = f"❌ Error inesperado: {e}"
+        print(mensaje)
+        with open("revision.txt", "w", encoding="utf-8") as out:
+            out.write(mensaje)
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+
+
 
 if __name__ == "__main__":
     main()
