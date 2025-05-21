@@ -37,3 +37,27 @@ jobs:
       with:
         python-version: '3.10'
 
+    - name: Instalar dependencias
+      run: |
+        pip install 'openai>=1.0.0,<2.0.0'
+        sudo apt-get update -y
+        sudo apt-get install -y gh
+
+    - name: Ejecutar revisión con IA
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: python .github/scripts/revision_ia.py
+
+    - name: Comentar en el PR
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        REPO="${{ github.repository }}"
+        PR_NUMBER=${{ github.event.pull_request.number }}
+        pr_url=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json url -q .url)
+
+        if [ -f revision.txt ] && [ -s revision.txt ]; then
+          gh pr comment "$pr_url" --repo "$REPO" --body "$(cat revision.txt)"
+        else
+          gh pr comment "$pr_url" --repo "$REPO" --body "⚠️ No se generó revisión automática porque no se obtuvieron commits o la API falló."
+        fi
