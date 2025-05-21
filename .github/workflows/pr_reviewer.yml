@@ -58,5 +58,11 @@ jobs:
       run: |
         REPO="${{ github.repository }}"
         PR_NUMBER=${{ github.event.pull_request.number }}
-        pr_url=$(gh pr view "$_
+        pr_url=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json url -q .url)
+
+        if [ -f revision.txt ] && [ -s revision.txt ]; then
+          gh pr comment "$pr_url" --repo "$REPO" --body "$(cat revision.txt)"
+        else
+          gh pr comment "$pr_url" --repo "$REPO" --body "⚠️ No se generó revisión automática porque no se obtuvieron commits o la API falló."
+        fi
 
