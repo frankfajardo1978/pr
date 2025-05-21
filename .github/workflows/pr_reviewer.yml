@@ -1,7 +1,7 @@
 name: Revisar PR con IA
 
 on:
-  pull_request_target:          # seguimos usando _target_ para poder leer el secret
+  pull_request_target:
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -13,45 +13,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout del HEAD del PR (la rama que envía el colaborador)
     - name: Checkout PR HEAD
       uses: actions/checkout@v3
       with:
         fetch-depth: 0
-        ref: ${{ github.event.pull_request.head.sha }}   # <- clave: trae el commit del PR
+        ref: ${{ github.event.pull_request.head.sha }}
 
-    # 2. Traemos la rama base para comparar
-    - name: Fetch rama base del PR
-      run: git fetch origin ${{ github.event.pull_request.base.ref }}
+    - name: Configurar la rama base del PR
+      run: |
+        echo "🔧 Base: ${{ github.event.pull_request.base.ref }}"
+        echo "🔧 Head: ${{ github.event.pull_request.head.ref }}"
+        git fetch origin ${{ github.event.pull_request.base.ref }}
 
-    # 3. Volcamos SOLO los commits del PR (al menos 1) a commits.txt
     - name: Obtener commits del PR
       run: |
-        git log origin/${{ github.event.pull_request.base.ref }}..HEAD \
-          --pretty=format:"%h %s" -n 20 > commits.txt
-        echo "🔎 Commits capturados:"
+        git log origin/${{ github.event.pull_request.base.ref }}..HEAD --pretty=format:"%h %s" -n 20 > commits.txt
+        echo "📄 Commits capturados:"
         cat commits.txt
 
-    # 4. Configuramos Python
     - name: Configurar Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
 
-    # 5. Instalamos dependencias
     - name: Instalar dependencias
       run: |
         pip install 'openai>=1.0.0,<2.0.0'
         sudo apt-get update -y
         sudo apt-get install -y gh
 
-    # 6. Ejecutamos la revisión IA
     - name: Ejecutar revisión con IA
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: python .github/scripts/revision_ia.py
 
-    # 7. Comentamos en el PR con la revisión
     - name: Comentar en el PR
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -65,4 +60,3 @@ jobs:
         else
           gh pr comment "$pr_url" --repo "$REPO" --body "⚠️ No se generó revisión automática porque no se obtuvieron commits o la API falló."
         fi
-
