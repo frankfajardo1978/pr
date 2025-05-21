@@ -16,8 +16,8 @@ jobs:
     - name: Checkout PR HEAD
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0
-        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0                # Trae todo el historial
+        ref: ${{ github.event.pull_request.head.sha }}   # Checkout del commit del PR
 
     - name: Configurar la rama base del PR
       run: |
@@ -27,7 +27,8 @@ jobs:
 
     - name: Obtener commits del PR
       run: |
-        git log origin/${{ github.event.pull_request.base.ref }}..HEAD --pretty=format:"%h %s" -n 20 > commits.txt
+        git log origin/${{ github.event.pull_request.base.ref }}..HEAD \
+          --pretty=format:"%h %s" -n 20 > commits.txt
         echo "📄 Commits capturados:"
         cat commits.txt
 
