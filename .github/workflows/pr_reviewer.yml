@@ -16,14 +16,19 @@ jobs:
     - name: Checkout completo del repo
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0
+        fetch-depth: 0  # Necesario para comparar ramas correctamente
 
-    - name: Asegurar que origin/main está disponible
-      run: git fetch origin main
+    - name: Configurar la rama base del PR
+      run: |
+        echo "🔧 Base: ${{ github.event.pull_request.base.ref }}"
+        echo "🔧 Head: ${{ github.event.pull_request.head.ref }}"
+        git fetch origin ${{ github.event.pull_request.base.ref }}
 
     - name: Obtener mensajes de commit del PR
       run: |
-        git log --pretty=format:"%s" origin/main..HEAD > commits.txt || echo "⚠️ No se pudo obtener commits" > commits.txt
+        git log origin/${{ github.event.pull_request.base.ref }}..HEAD --pretty=format:"%h %s" > commits.txt
+        echo "📄 Commits capturados:"
+        cat commits.txt
 
     - name: Configurar Python
       uses: actions/setup-python@v4
